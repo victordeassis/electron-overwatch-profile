@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Shopping List</title>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+  <nav>
+    <div class="nav-wrapper" style="background-color: #43484c">
+      <a class="brand-logo center">Overwatch Profiles</a>
+    </div>
+  </nav>
+  <div class="container" style="margin-top: 50px;">
+    <form>
+      <div>
+        <label>Enter Battletag</label>
+        <input type="text" id="battletag" autofocus>
+      </div>
+      <button class="btn waves-effect waves-light" type="submit" style="background-color: #f99e1a">Search</button>
+    </form>
+    <div style="margin-top: 50px;">
+        <img id="userPhoto" src="" alt="">
+        <h1 id="userName"></h1>
+        <h2 id="userLevel"></h2>
+        <h2 id="userRank"></h2>
+    </div>
+  </div>
+  <ul>
+  </ul>
+
+  <div class="fixed-action-btn">
+    <a class="btn-floating btn-large red" id="add-button">
+      <i class="large material-icons">add</i>
+    </a>
+    <ul>
+      <li>
+        <a class="btn-floating red">
+          <i class="material-icons">insert_chart</i>
+        </a>
+      </li>
+      <li>
+        <a class="btn-floating yellow darken-1">
+          <i class="material-icons">format_quote</i>
+        </a>
+      </li>
+      <li>
+        <a class="btn-floating green">
+          <i class="material-icons">publish</i>
+        </a>
+      </li>
+      <li>
+        <a class="btn-floating blue">
+          <i class="material-icons">attach_file</i>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <script>
+    const electron = require('electron');
+    const url = require('url');
+    const path = require('path');
+    const { ipcRenderer } = electron;
+    const ul = document.querySelector('ul');
+
+    const { BrowserWindow, Menu } = electron;
+
+    let addWindow;
+    // import createAddWindow from 'main.js';
+
+    // Catch add item event and add an item
+    ipcRenderer.on('item:add', function (e, item) {
+      ul.className = 'collection';
+      const li = document.createElement('li');
+      li.className = 'collection-item';
+      const itemText = document.createTextNode(item);
+      li.appendChild(itemText);
+      ul.appendChild(li);
+    })
+
+    // Clear items
+    ipcRenderer.on('item:clear', function () {
+      ul.innerHTML = '';
+      ul.className = '';
+    })
+
+    // Treat OW Data
+    ipcRenderer.on('item:ow', function (e, owData) {
+      console.log(owData);
+      const userName = document.querySelector('#userName');
+      const userPhoto = document.querySelector('#userPhoto');
+      const userLevel = document.querySelector('#userLevel');
+      const userRank = document.querySelector('#userRank');
+
+      userName.textContent = owData.data.username;
+      userPhoto.src = owData.data.portrait;
+      userLevel.textContent = "Level: " + owData.data.level;
+
+      const userRankData = owData.data.competitive.rank;
+
+      userRankData !== null ? userRank.textContent = "Rank: " + userRankData : userRank.textContent = "Rank: Unranked";
+    })
+
+    ul.addEventListener('dblclick', removeItem);
+
+    function removeItem(e) {
+      e.target.remove();
+      if (ul.children.length == 0) {
+        ul.className = '';
+      }
+    }
+
+    const addButton = document.querySelector('#add-button');
+    addButton.addEventListener('click', openAddWindow);
+
+    function openAddWindow(e) {
+      e.preventDefault();
+      createAddWindow();
+      console.log("UHUL");
+      // const item = document.querySelector('#item').value;
+      // ipcRenderer.send('item:add', item);
+    }
+
+    const form = document.querySelector('form');
+    form.addEventListener('submit', submitForm);
+
+    function submitForm(e) {
+      e.preventDefault();
+      console.log("SUMIT");
+      const battletag = document.querySelector('#battletag').value.replace("#", "-");
+      ipcRenderer.send('item:search', battletag);
+    }
+
+
+  </script>
+</body>
+
+</html>
